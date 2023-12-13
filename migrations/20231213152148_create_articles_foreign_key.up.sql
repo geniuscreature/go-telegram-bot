@@ -1,0 +1,1 @@
+alter table articles add constraint fk_articles_source foreign key (source_id) references sources (id) on delete cascade;
