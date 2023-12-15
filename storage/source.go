@@ -101,24 +101,3 @@ func (s *SourceMysqlStorage) Delete(ctx context.Context, id int64) error {
 
 	return nil
 }
-
-func (s *SourceMysqlStorage) Store(ctx context.Context, article models.Article) error {
-	stmt, err := s.store.DB.Prepare("insert into articles (source_id, title, link, summary, published_at) values (?, ?, ?, ?, ?)")
-	if err != nil {
-		return err
-	}
-
-	if _, err := stmt.ExecContext(
-		ctx,
-		article.SourceID,
-		article.Title,
-		article.Link,
-		article.Link,
-		article.Summary,
-		article.PublishedAt,
-	); err != nil {
-		return err
-	}
-
-	return nil
-}
