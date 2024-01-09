@@ -11,7 +11,7 @@ type Storage struct {
 	DB *sql.DB
 }
 
-func New() (*Storage, error) {
+func New() (*sql.DB, error) {
 	connString := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s",
 		os.Getenv("DB_USER"),
@@ -26,7 +26,5 @@ func New() (*Storage, error) {
 		log.Fatalf("Couldn't connect to db: %s ", err)
 	}
 
-	return &Storage{
-		DB: db,
-	}, nil
+	return db, nil
 }

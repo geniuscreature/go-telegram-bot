@@ -2,16 +2,22 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"github.com/geniuscreature/go-telegram-bot/internal/models"
-	"github.com/geniuscreature/go-telegram-bot/storage/mysql"
 )
 
 type SourceMysqlStorage struct {
-	store mysql.Storage
+	db *sql.DB
+}
+
+func NewSourceStorage(db *sql.DB) *SourceMysqlStorage {
+	return &SourceMysqlStorage{
+		db: db,
+	}
 }
 
 func (s *SourceMysqlStorage) Sources(ctx context.Context) ([]models.Source, error) {
-	stmt, err := s.store.DB.Prepare("select * from sources")
+	stmt, err := s.db.Prepare("select * from sources")
 	if err != nil {
 		return []models.Source{}, err
 	}
@@ -48,7 +54,7 @@ func (s *SourceMysqlStorage) Sources(ctx context.Context) ([]models.Source, erro
 }
 
 func (s *SourceMysqlStorage) SourceByID(ctx context.Context, id int64) (models.Source, error) {
-	stmt, err := s.store.DB.Prepare("select * from sources where id = ?")
+	stmt, err := s.db.Prepare("select * from sources where id = ?")
 	if err != nil {
 		return models.Source{}, err
 	}
@@ -71,7 +77,7 @@ func (s *SourceMysqlStorage) SourceByID(ctx context.Context, id int64) (models.S
 }
 
 func (s *SourceMysqlStorage) Add(ctx context.Context, source models.Source) (int64, error) {
-	stmt, err := s.store.DB.Prepare("insert into sources (name, url) values (?, ?)")
+	stmt, err := s.db.Prepare("insert into sources (name, url) values (?, ?)")
 	if err != nil {
 		return 0, err
 	}
@@ -90,7 +96,7 @@ func (s *SourceMysqlStorage) Add(ctx context.Context, source models.Source) (int
 }
 
 func (s *SourceMysqlStorage) Delete(ctx context.Context, id int64) error {
-	stmt, err := s.store.DB.Prepare("delete from sources where id = ?")
+	stmt, err := s.db.Prepare("delete from sources where id = ?")
 	if err != nil {
 		return err
 	}

@@ -2,16 +2,22 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"github.com/geniuscreature/go-telegram-bot/internal/models"
-	"github.com/geniuscreature/go-telegram-bot/storage/mysql"
 )
 
 type ArticleMysqlStorage struct {
-	store mysql.Storage
+	db *sql.DB
+}
+
+func NewArticleStorage(db *sql.DB) *ArticleMysqlStorage {
+	return &ArticleMysqlStorage{
+		db: db,
+	}
 }
 
 func (s *ArticleMysqlStorage) Store(ctx context.Context, article models.Article) error {
-	stmt, err := s.store.DB.Prepare("insert into articles (source_id, title, link, summary, published_at) values (?, ?, ?, ?, ?)")
+	stmt, err := s.db.Prepare("insert into articles (source_id, title, link, summary, published_at) values (?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -32,7 +38,7 @@ func (s *ArticleMysqlStorage) Store(ctx context.Context, article models.Article)
 }
 
 func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context) ([]models.Article, error) {
-	stmt, err := s.store.DB.Prepare("select * from articles where posted_at is null >= current_timestamp order by published_at")
+	stmt, err := s.db.Prepare("select * from articles where posted_at is null >= current_timestamp order by published_at")
 
 	if err != nil {
 		return []models.Article{}, err
@@ -73,7 +79,7 @@ func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context) ([]models.Articl
 }
 
 func (s *ArticleMysqlStorage) MarkPosted(ctx context.Context, id int64) error {
-	stmt, err := s.store.DB.Prepare("update articles set posted_at = current_timestamp where id = ?")
+	stmt, err := s.db.Prepare("update articles set posted_at = current_timestamp where id = ?")
 	if err != nil {
 		return err
 	}
