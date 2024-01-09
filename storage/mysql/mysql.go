@@ -2,9 +2,8 @@ package mysql
 
 import (
 	"database/sql"
-	"fmt"
+	"github.com/geniuscreature/go-telegram-bot/internal/config"
 	"log"
-	"os"
 )
 
 type Storage struct {
@@ -12,16 +11,9 @@ type Storage struct {
 }
 
 func New() (*sql.DB, error) {
-	connString := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-	)
+	var cfg config.Config
 
-	db, err := sql.Open("mysql", connString)
+	db, err := sql.Open("mysql", cfg.DatabaseConn)
 	if err != nil {
 		log.Fatalf("Couldn't connect to db: %s ", err)
 	}
