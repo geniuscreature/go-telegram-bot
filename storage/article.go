@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/geniuscreature/go-telegram-bot/internal/models"
+	"time"
 )
 
 type ArticleMysqlStorage struct {
@@ -37,8 +38,16 @@ func (s *ArticleMysqlStorage) Store(ctx context.Context, article models.Article)
 	return nil
 }
 
-func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context) ([]models.Article, error) {
-	stmt, err := s.db.Prepare("select * from articles where posted_at is null >= current_timestamp order by published_at")
+func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context, timestamp time.Time, limit int64) ([]models.Article, error) {
+	stmt, err := s.db.Prepare(`
+		select * 
+		from articles 
+		where 
+		    posted_at is null and 
+		    published_at >= ? 
+		order by created_at
+		limit ?`,
+	)
 
 	if err != nil {
 		return []models.Article{}, err
@@ -46,6 +55,8 @@ func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context) ([]models.Articl
 
 	rows, err := stmt.QueryContext(
 		ctx,
+		timestamp,
+		limit,
 	)
 	if err != nil {
 		return []models.Article{}, err
