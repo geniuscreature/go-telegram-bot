@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"github.com/geniuscreature/go-telegram-bot/internal/config"
+	_ "github.com/go-sql-driver/mysql"
 	"log"
 )
 
