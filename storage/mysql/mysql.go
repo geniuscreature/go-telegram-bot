@@ -11,9 +11,7 @@ type Storage struct {
 	DB *sql.DB
 }
 
-func New() (*sql.DB, error) {
-	var cfg config.Config
-
+func New(cfg *config.Config) (*sql.DB, error) {
 	db, err := sql.Open("mysql", cfg.DatabaseConn)
 	if err != nil {
 		log.Fatalf("Couldn't connect to db: %s ", err)
