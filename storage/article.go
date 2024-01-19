@@ -18,28 +18,25 @@ func NewArticleStorage(db *sql.DB) *ArticleMysqlStorage {
 }
 
 func (s *ArticleMysqlStorage) Store(ctx context.Context, article models.Article) error {
-	stmt, err := s.db.Prepare("insert into articles (source_id, title, link, summary, published_at) values (?, ?, ?, ?, ?)")
-	if err != nil {
-		return err
-	}
-
-	if _, err := stmt.ExecContext(
+	if err := s.db.QueryRowContext(
 		ctx,
+		"insert into articles (source_id, title, link, summary, published_at) values (?, ?, ?, ?, ?)",
 		article.SourceID,
 		article.Title,
 		article.Link,
-		article.Link,
 		article.Summary,
 		article.PublishedAt,
-	); err != nil {
-		return err
+	); err.Err() != nil {
+		return err.Err()
 	}
 
 	return nil
 }
 
 func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context, timestamp time.Time, limit int64) ([]models.Article, error) {
-	stmt, err := s.db.Prepare(`
+	rows, err := s.db.QueryContext(
+		ctx,
+		`
 		select * 
 		from articles 
 		where 
@@ -47,14 +44,6 @@ func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context, timestamp time.T
 		    published_at >= ? 
 		order by created_at
 		limit ?`,
-	)
-
-	if err != nil {
-		return []models.Article{}, err
-	}
-
-	rows, err := stmt.QueryContext(
-		ctx,
 		timestamp,
 		limit,
 	)
@@ -90,16 +79,12 @@ func (s *ArticleMysqlStorage) AllNotPosted(ctx context.Context, timestamp time.T
 }
 
 func (s *ArticleMysqlStorage) MarkPosted(ctx context.Context, id int64) error {
-	stmt, err := s.db.Prepare("update articles set posted_at = current_timestamp where id = ?")
-	if err != nil {
-		return err
-	}
-
-	if _, err := stmt.ExecContext(
+	if err := s.db.QueryRowContext(
 		ctx,
+		"update articles set posted_at = current_timestamp where id = ?",
 		id,
 	); err != nil {
-		return err
+		return err.Err()
 	}
 
 	return nil

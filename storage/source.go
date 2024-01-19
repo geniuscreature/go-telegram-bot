@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/geniuscreature/go-telegram-bot/internal/models"
+	"time"
 )
 
 type SourceMysqlStorage struct {
@@ -17,14 +18,7 @@ func NewSourceStorage(db *sql.DB) *SourceMysqlStorage {
 }
 
 func (s *SourceMysqlStorage) Sources(ctx context.Context) ([]models.Source, error) {
-	stmt, err := s.db.Prepare("select * from sources")
-	if err != nil {
-		return []models.Source{}, err
-	}
-
-	rows, err := stmt.QueryContext(
-		ctx,
-	)
+	rows, err := s.db.QueryContext(ctx, "select * from sources")
 	if err != nil {
 		return []models.Source{}, err
 	}
@@ -33,15 +27,32 @@ func (s *SourceMysqlStorage) Sources(ctx context.Context) ([]models.Source, erro
 
 	for rows.Next() {
 		var source models.Source
+
+		var createdAt, updatedAt []uint8
+
 		if err = rows.Scan(
 			&source.ID,
 			&source.Name,
 			&source.Url,
-			&source.CreatedAt,
-			&source.UpdatedAt,
+			&createdAt,
+			&updatedAt,
 		); err != nil {
 			return []models.Source{}, nil
 		}
+
+		createdAtString, updatedAtString := string(createdAt), string(updatedAt)
+
+		createdAtTime, err := time.Parse("2006-01-02 15:04:05", createdAtString)
+		if err != nil {
+			return []models.Source{}, err
+		}
+
+		updatedAtTime, err := time.Parse("2006-01-02 15:04:05", updatedAtString)
+		if err != nil {
+			return []models.Source{}, err
+		}
+
+		source.CreatedAt, source.UpdatedAt = createdAtTime, updatedAtTime
 
 		sources = append(sources, source)
 	}
@@ -54,15 +65,11 @@ func (s *SourceMysqlStorage) Sources(ctx context.Context) ([]models.Source, erro
 }
 
 func (s *SourceMysqlStorage) SourceByID(ctx context.Context, id int64) (models.Source, error) {
-	stmt, err := s.db.Prepare("select * from sources where id = ?")
-	if err != nil {
-		return models.Source{}, err
-	}
-
 	var source models.Source
 
-	if err := stmt.QueryRowContext(
+	if err := s.db.QueryRowContext(
 		ctx,
+		"select * from sources where id = ?",
 		id,
 	).Scan(
 		&source.Name,
@@ -77,12 +84,12 @@ func (s *SourceMysqlStorage) SourceByID(ctx context.Context, id int64) (models.S
 }
 
 func (s *SourceMysqlStorage) Add(ctx context.Context, source models.Source) (int64, error) {
-	stmt, err := s.db.Prepare("insert into sources (name, url) values (?, ?)")
-	if err != nil {
-		return 0, err
-	}
-
-	res, err := stmt.ExecContext(ctx, source.Name, source.Url)
+	res, err := s.db.ExecContext(
+		ctx,
+		"insert into sources (name, url) values (?, ?)",
+		source.Name,
+		source.Url,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -96,12 +103,11 @@ func (s *SourceMysqlStorage) Add(ctx context.Context, source models.Source) (int
 }
 
 func (s *SourceMysqlStorage) Delete(ctx context.Context, id int64) error {
-	stmt, err := s.db.Prepare("delete from sources where id = ?")
-	if err != nil {
-		return err
-	}
-
-	if _, err := stmt.ExecContext(ctx, id); err != nil {
+	if _, err := s.db.ExecContext(
+		ctx,
+		"delete from sources where id = ?",
+		id,
+	); err != nil {
 		return err
 	}
 
