@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"github.com/geniuscreature/go-telegram-bot/internal/models"
-	"time"
 )
 
 type SourceMysqlStorage struct {
@@ -28,31 +27,15 @@ func (s *SourceMysqlStorage) Sources(ctx context.Context) ([]models.Source, erro
 	for rows.Next() {
 		var source models.Source
 
-		var createdAt, updatedAt []uint8
-
 		if err = rows.Scan(
 			&source.ID,
 			&source.Name,
 			&source.Url,
-			&createdAt,
-			&updatedAt,
+			&source.CreatedAt,
+			&source.UpdatedAt,
 		); err != nil {
 			return []models.Source{}, nil
 		}
-
-		createdAtString, updatedAtString := string(createdAt), string(updatedAt)
-
-		createdAtTime, err := time.Parse("2006-01-02 15:04:05", createdAtString)
-		if err != nil {
-			return []models.Source{}, err
-		}
-
-		updatedAtTime, err := time.Parse("2006-01-02 15:04:05", updatedAtString)
-		if err != nil {
-			return []models.Source{}, err
-		}
-
-		source.CreatedAt, source.UpdatedAt = createdAtTime, updatedAtTime
 
 		sources = append(sources, source)
 	}
