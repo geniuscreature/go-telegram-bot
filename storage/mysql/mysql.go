@@ -16,6 +16,7 @@ func New(cfg *config.Config) (*sql.DB, error) {
 	if err != nil {
 		log.Fatalf("Couldn't connect to db: %s ", err)
 	}
+	db.SetMaxOpenConns(50)
 
 	return db, nil
 }
